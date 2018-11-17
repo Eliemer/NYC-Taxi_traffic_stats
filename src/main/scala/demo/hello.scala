@@ -96,12 +96,17 @@ object hello {
       "SELECT avg(fare_amount) as avg_fare " +
         "FROM fares")
       .show()
-
-
+    
   }
 
-  def printResults(df: DataFrame) = {
+  def saveResults(df: DataFrame, fileName: String) = {
+    df.write
+      .format("com.databricks.spark.csv")
+      .mode(SaveMode.Overwrite)
+      .option("header", "true")
+      .save("src/main/resources/" + fileName)
 
+    println("Saved file: " + fileName)
   }
 
 }
