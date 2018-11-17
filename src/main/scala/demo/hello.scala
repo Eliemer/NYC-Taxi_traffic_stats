@@ -35,7 +35,7 @@ object hello {
       .csv("src/main/resources/big_yellow.csv")
 
     df = df.withColumn("ID", monotonically_increasing_id())
-    
+
     val zone = spark.read
         .format("csv")
         .option("header", "true")
