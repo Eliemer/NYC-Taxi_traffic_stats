@@ -34,24 +34,15 @@ object hello {
       .option("inferSchema", "true")
       .csv("src/main/resources/big_yellow.csv")
 
+    df = df.withColumn("ID", monotonically_increasing_id())
+    
     val zone = spark.read
         .format("csv")
         .option("header", "true")
         .option("inferSchema", "true")
         .csv("src/main/resources/taxi_zone_lookup.csv")
 
-    //zone.show()
 
-    //println("Number of rows: " + df.count())
-
-    df = df.withColumn("ID", monotonically_increasing_id())
-
-//    df.limit(100)
-//      .repartition(1)
-//      .write.format("com.databricks.spark.csv")
-//      .mode(SaveMode.Overwrite)
-//      .option("header", "true")
-//      .save("src/main/resources/small_yellow_cabs.csv/")
 
 
 
@@ -96,7 +87,7 @@ object hello {
       "SELECT avg(fare_amount) as avg_fare " +
         "FROM fares")
       .show()
-    
+
   }
 
   def saveResults(df: DataFrame, fileName: String) = {
