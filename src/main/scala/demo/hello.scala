@@ -4,6 +4,7 @@ import org.apache.log4j.Logger
 import org.apache.log4j.Level
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.functions._
 import org.apache.spark.{SparkConf, SparkContext}
 
 object hello {
@@ -27,38 +28,79 @@ object hello {
 
 
     // Access and save data set from AWS bucket to val df
-    val df = spark.read
+    var df = spark.read
       .format("csv")
       .option("header", "true")
       .option("inferSchema", "true")
-      .load("src/main/resources/big_yellow.csv")
+      .csv("src/main/resources/big_yellow.csv")
 
-    println("Number of rows: " + df.count())
+    val zone = spark.read
+        .format("csv")
+        .option("header", "true")
+        .option("inferSchema", "true")
+        .csv("src/main/resources/taxi_zone_lookup.csv")
 
-    df.limit(100)
-      .repartition(1)
-      .write.format("com.databricks.spark.csv")
-      .mode(SaveMode.Overwrite)
-      .option("header", "true")
-      .save("src/main/resources/small_yellow_cabs.csv")
+    //zone.show()
+
+    //println("Number of rows: " + df.count())
+
+    df = df.withColumn("ID", monotonically_increasing_id())
+
+//    df.limit(100)
+//      .repartition(1)
+//      .write.format("com.databricks.spark.csv")
+//      .mode(SaveMode.Overwrite)
+//      .option("header", "true")
+//      .save("src/main/resources/small_yellow_cabs.csv/")
 
 
 
     // Statistics to be examined:
 
     //groupByHour(df = df)
-
-
+    //avgNumPassengers(df = df)
+    groupByDistric(df, zone)
+    avgFarePaid(df)
 
 
   }
 
   def groupByHour(df: DataFrame) = {
-    //df.col()
+
   }
 
+  def groupByDistric(df: DataFrame, zone: DataFrame) = {
+    zone.createOrReplaceTempView("zones")
+    df.createOrReplaceTempView("districts")
 
-  def printResults(dataSet: Any) = {
+    val result = df.sqlContext
+      .sql("SELECT Borough as pickup_location, count(ID) as number_of_trips " +
+        "FROM districts, zones " +
+        "WHERE districts.PULocationID = zones.LocationID " +
+        "GROUP BY Borough")
+
+    result.show()
+  }
+
+  def avgNumPassengers(df: DataFrame)= {
+    df.createOrReplaceTempView("passengers")
+    df.sqlContext.sql(
+        "SELECT avg(passenger_count) as avg_passenger " +
+        "FROM passengers")
+      .show()
+  }
+
+  def avgFarePaid(df: DataFrame) = {
+    df.createOrReplaceTempView("fares")
+    df.sqlContext.sql(
+      "SELECT avg(fare_amount) as avg_fare " +
+        "FROM fares")
+      .show()
+
+
+  }
+
+  def printResults(df: DataFrame) = {
 
   }
 
